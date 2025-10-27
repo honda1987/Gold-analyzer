@@ -764,6 +764,326 @@
                                 <div>
                                     <div style="font-size: 12px; color: #666;">ราคาขาย</div>
                                     <div style="font-size: 20px; font-weight: bold; color: #ef4444;">
+                                        ฿${ornamentSell.toLocaleString('th-TH', {maximumFractionDigits: 0})}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="font-size: 11px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+                                ต่อบาท (รวมค่าแรง)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+                            <div>
+                                <span style="color: #666;">💵 ราคาสากล:</span>
+                                <strong style="color: #333;"> $${currentPrice.toFixed(2)}/oz</strong>
+                            </div>
+                            <div>
+                                <span style="color: #666;">💱 อัตราแลกเปลี่ยน:</span>
+                                <strong style="color: #333;"> ฿${usdToThb}</strong>
+                            </div>
+                        </div>
+                        <div style="font-size: 11px; color: #92400e; margin-top: 8px; text-align: center;">
+                            ℹ️ ราคาอ้างอิงจากตลาดโลก อาจแตกต่างจากร้านทองจริง
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('thaiGoldCard').innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #ef4444;">
+                        ❌ ไม่สามารถคำนวณราคาทองไทยได้
+                    </div>
+                `;
+            }
+        }
+        
+        // อัพเดทการ์ดราคา
+        function updatePriceCard(symbol, price, change, changePct) {
+            const changeClass = change >= 0 ? 'positive' : 'negative';
+            const changeSymbol = change >= 0 ? '🟢 +' : '🔴 ';
+            
+            document.getElementById('priceCard').innerHTML = `
+                <div class="price-display">$${price.toFixed(2)}</div>
+                <div class="change ${changeClass}">
+                    ${changeSymbol}${Math.abs(change).toFixed(2)} (${changePct.toFixed(2)}%)
+                </div>
+            `;
+        }
+        
+        // อัพเดทการ์ดการเปลี่ยนแปลง
+        function updateChangeCard(open, high, low, fromHighPct, fromLowPct) {
+            document.getElementById('changeCard').innerHTML = `
+                <div class="metric">
+                    <span class="metric-label">เปิด</span>
+                    <span class="metric-value">$${open.toFixed(2)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">สูงสุด</span>
+                    <span class="metric-value">$${high.toFixed(2)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">ต่ำสุด</span>
+                    <span class="metric-value">$${low.toFixed(2)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">ห่างจากจุดสูงสุด</span>
+                    <span class="metric-value">${fromHighPct.toFixed(2)}%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">ห่างจากจุดต่ำสุด</span>
+                    <span class="metric-value">+${fromLowPct.toFixed(2)}%</span>
+                </div>
+            `;
+        }
+        
+        // อัพเดทการ์ด Indicators
+        function updateIndicatorCard(rsi, aboveSMA20Pct, volumeChangePct) {
+            const rsiClass = rsi > 70 ? 'bearish' : rsi < 30 ? 'bullish' : 'neutral';
+            const smaClass = aboveSMA20Pct > 0 ? 'bullish' : 'bearish';
+            const volClass = volumeChangePct > 20 ? 'bullish' : volumeChangePct < -20 ? 'bearish' : 'neutral';
+            
+            document.getElementById('indicatorCard').innerHTML = `
+                <div class="indicator ${rsiClass}">
+                    <span>RSI (14)</span>
+                    <span><strong>${rsi.toFixed(2)}</strong></span>
+                </div>
+                <div class="indicator ${smaClass}">
+                    <span>เทียบ SMA(20)</span>
+                    <span><strong>${aboveSMA20Pct > 0 ? '+' : ''}${aboveSMA20Pct.toFixed(2)}%</strong></span>
+                </div>
+                <div class="indicator ${volClass}">
+                    <span>Volume vs ค่าเฉลี่ย</span>
+                    <span><strong>${volumeChangePct > 0 ? '+' : ''}${volumeChangePct.toFixed(2)}%</strong></span>
+                </div>
+            `;
+        }
+        
+        // อัพเดทการ์ดแนวโน้ม
+        function updateTrendCard(dayChangePct, aboveSMA20Pct, rsi, volumeChangePct) {
+            let signals = [];
+            
+            if (dayChangePct > 0) signals.push('📈 ราคาขาขึ้น');
+            else signals.push('📉 ราคาขาลง');
+            
+            if (aboveSMA20Pct > 2) signals.push('🟢 อยู่เหนือ SMA');
+            else if (aboveSMA20Pct < -2) signals.push('🔴 อยู่ใต้ SMA');
+            else signals.push('🟡 ใกล้ SMA');
+            
+            if (rsi > 70) signals.push('⚠️ Overbought');
+            else if (rsi < 30) signals.push('✅ Oversold');
+            else signals.push('➖ RSI ปกติ');
+            
+            if (volumeChangePct > 20) signals.push('🔊 Volume สูง');
+            else if (volumeChangePct < -20) signals.push('🔇 Volume ต่ำ');
+            
+            let bullishCount = 0;
+            let bearishCount = 0;
+            
+            if (dayChangePct > 0) bullishCount++;
+            else bearishCount++;
+            
+            if (aboveSMA20Pct > 0) bullishCount++;
+            else bearishCount++;
+            
+            if (rsi < 50) bullishCount++;
+            else bearishCount++;
+            
+            const overallTrend = bullishCount > bearishCount ? 'bullish' : 
+                                bullishCount < bearishCount ? 'bearish' : 'neutral';
+            const trendText = overallTrend === 'bullish' ? '🟢 แนวโน้มขาขึ้น' :
+                             overallTrend === 'bearish' ? '🔴 แนวโน้มขาลง' : '🟡 แนวโน้มกลางๆ';
+            
+            document.getElementById('trendCard').innerHTML = `
+                <div class="indicator ${overallTrend}" style="margin-bottom: 15px;">
+                    <span style="font-size: 1.2em; font-weight: bold;">${trendText}</span>
+                </div>
+                ${signals.map(signal => `
+                    <div class="metric">
+                        <span>${signal}</span>
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        // อัพเดทกราฟ
+        function updateChart(prices) {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            if (priceChart) {
+                priceChart.destroy();
+            }
+            
+            const labels = prices.map((_, i) => i + 1);
+            
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ราคา',
+                        data: prices,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Auto Refresh
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('autoRefreshBtn');
+            
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                btn.textContent = '▶️ Auto Refresh';
+                btn.style.background = '#667eea';
+            } else {
+                const interval = 60000;
+                autoRefreshInterval = setInterval(fetchAllData, interval);
+                btn.textContent = '⏸️ หยุด Refresh';
+                btn.style.background = '#10b981';
+                fetchAllData();
+                
+                showNotification('เปิด Auto Refresh แล้ว (ทุก 60 วินาที)', 'success');
+            }
+        }
+        
+        // แสดง notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#667eea'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // ดึงข้อมูลทั้งหมด
+        async function fetchAllData() {
+            await fetchGoldData();
+        }
+        
+        // Event Listeners
+        document.getElementById('symbolSelect').addEventListener('change', () => {
+            fetchAllData();
+        });
+        
+        document.getElementById('intervalSelect').addEventListener('change', () => {
+            const interval = document.getElementById('intervalSelect').value;
+            showNotification(`เปลี่ยนเป็น ${interval} แล้ว`, 'info');
+            fetchAllData();
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                e.preventDefault();
+                fetchAllData();
+                showNotification('🔄 Refreshing...', 'info');
+            }
+            
+            if (e.key === ' ' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                toggleAutoRefresh();
+            }
+        });
+        
+        // Network Status
+        window.addEventListener('online', () => {
+            showNotification('✅ เชื่อมต่ออินเทอร์เน็ตแล้ว', 'success');
+            fetchAllData();
+        });
+        
+        window.addEventListener('offline', () => {
+            showNotification('⚠️ ไม่มีการเชื่อมต่ออินเทอร์เน็ต', 'error');
+        });
+        
+        // Visibility API
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && autoRefreshInterval) {
+                console.log('Page hidden - pausing auto refresh');
+            } else if (!document.hidden && autoRefreshInterval) {
+                console.log('Page visible - resuming auto refresh');
+                fetchAllData();
+            }
+        });
+        
+        // Error boundary
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e);
+            showNotification('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e);
+        });
+        
+        // เริ่มต้นโหลดข้อมูล
+        window.addEventListener('DOMContentLoaded', () => {
+            showNotification('กำลังโหลดข้อมูล...', 'info');
+            fetchAllData();
+            
+            setTimeout(() => {
+                showNotification('💡 Tip: กดปุ่ม Auto Refresh เพื่ออัพเดทอัตโนมัติ', 'info');
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
+                                    <div style="font-size: 20px; font-weight: bold; color: #ef4444;">
                                         ฿${goldBarSell.toLocaleString('th-TH', {maximumFractionDigits: 0})}
                                     </div>
                                 </div>
